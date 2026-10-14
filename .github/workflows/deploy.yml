@@ -1,0 +1,50 @@
+name: Publicar en GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: Versiones/v2.1_2026-09-09_WisfoxV2-final2_ACTUAL/package-lock.json
+
+      - name: Instalar dependencias
+        working-directory: Versiones/v2.1_2026-09-09_WisfoxV2-final2_ACTUAL
+        run: npm ci --prefer-offline || npm install
+
+      - name: Construir
+        working-directory: Versiones/v2.1_2026-09-09_WisfoxV2-final2_ACTUAL
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: Versiones/v2.1_2026-09-09_WisfoxV2-final2_ACTUAL/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
